@@ -4,7 +4,6 @@ import face_recognition
 import os
 import sys
 from datetime import datetime
-# from PIL import ImageGrab
  
 path = 'FaceDatabase'
 cascPath =  "Resources/haarcascade_frontalface_default.xml"
@@ -12,9 +11,6 @@ faceCascade = cv2.CascadeClassifier(cascPath)
 
 images = []
 classNames = []
-myList = os.listdir(path)
-print(myList)
-
 queque = []
 
 
@@ -72,10 +68,7 @@ def addFace(name):
         success, img = cap.read()
 
         success, imgMarked = cap.read()
- 
-        #img = cv2.cvtColor(imgMarked,cv2.COLOR_BGR2RGB)
-        
-            
+             
         faces = faceCascade.detectMultiScale(
             img,
             scaleFactor=1.1,
@@ -151,7 +144,6 @@ def retrieveFaces():
 
             faceList[person] = images
 
-        # images.append(curImg)
             classNames.append(os.path.splitext(person)[0])
 
     return faceList
@@ -163,11 +155,7 @@ def newFace():
     name = str(input("Type your name: "))
     addFace(name)
 
-    
-
-
-#print(classNames)
- 
+     
 def findEncodings(images):
     encodeList = []
     index = 0 
@@ -186,27 +174,19 @@ def findEncodings(images):
         exit()
  
  
-
-def main(): 
+def encodeDatabase(): 
     
-    try: 
-
-        if sys.argv[1].upper() == "A": 
-            newFace() 
-
-    except IndexError: 
-        pass
-
     Face_Database = retrieveFaces()
     
     encodeListKnown = findEncodings(images)
     print('Encoding Complete')
     
-    cap = cv2.VideoCapture(0)
+
+
+
+def run_Facial_Recognition(): 
     
     while True:
-        success, img = cap.read()
-        #img = captureScreen()
         imgS = cv2.resize(img,(0,0),None,0.25,0.25)
         imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
     
@@ -229,8 +209,6 @@ def main():
                 cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
                 cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
     
-        cv2.imshow('Webcam',img)
-        cv2.waitKey(1)
+        
+        return img
 
-
-main()
