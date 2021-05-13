@@ -1,47 +1,33 @@
-import io
-import socket
-import struct
-from PIL import Image
-import matplotlib.pyplot as plt
 
-server_socket = socket.socket()
-server_socket.bind(('192.168.0.11', 8000))  # ADD IP HERE
-server_socket.listen(0)
+import sys
+import time
+import traceback
+import numpy as np
+import cv2
+from imutils.video import FPS
+import imagezmq
 
-# Accept a single connection and make a file-like object out of it
-connection = server_socket.accept()[0].makefile('rb')
 try:
-    img = None
-    while True:
-        # Read the length of the image as a 32-bit unsigned int. If the
-        # length is zero, quit the loop
-        image_len = struct.unpack('<L', connection.read(struct.calcsize('<L')))[0]
-        if not image_len:
-            break
-        # Construct a stream to hold the image data and read the image
-        # data from the connection
-        image_stream = io.BytesIO()
-        image_stream.write(connection.read(image_len))
-        # Rewind the stream, open it as an image with PIL and do some
-        # processing on it
-        image_stream.seek(0)
-        image = Image.open(image_stream)
-        
-        if img is None:
-            plt.axis('off')
-            img = plt.imshow(image)
-
-        else:
-            img.set_data(image)
-            plt.axis('off')
-
-
-        plt.pause(0.01)
-        plt.draw()
-
-        print('Image is %dx%d' % image.size)
-        image.verify()
-        print('Image is verified')
+    with imagezmq.ImageHub() as image_hub:
+        while True:  # receive images until Ctrl-C is pressed
+            sent_from, jpg_buffer = image_hub.recv_jpg()
+            image = cv2.imdecode(np.frombuffer(jpg_buffer, dtype='uint8'), -1)
+            # see opencv docs for info on -1 parameter
+            cv2.imshow(sent_from, image)  # display images 1 window per sent_from
+            cv2.waitKey(1)
+            image_hub.send_reply(b'OK')  # REP reply
+except (KeyboardInterrupt, SystemExit):
+    pass  # Ctrl-C was pressed to end program; FPS stats computed below
+except Exception as ex:
+    print('Python error with no Exception handler:')
+    print('Traceback error:', ex)
+    traceback.print_exc()
 finally:
-    connection.close()
-    server_socket.close()
+    cv2.destroyAllWindows()  # closes the windows opened by cv2.imshow()
+    sys.exit()
+
+
+
+
+
+
